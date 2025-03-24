@@ -7,7 +7,7 @@ function Auth() {
     const [signIn, toggle] = useState(true);
 
     // State pour stocker les données de formulaire
-    const [signUpData, setSignUpData] = useState({ name: "", email: "",role:"USER", password: "" });
+    const [signUpData, setSignUpData] = useState({ name: "", email: "",role:"user", password: "" });
     const [signInData, setSignInData] = useState({ email: "", password: "" });
 
     // Fonction pour gérer le changement dans les inputs SignUp
@@ -59,7 +59,7 @@ function Auth() {
             console.log("Signin success:", data);
             if (response.ok) {
                 alert("Login successful!");
-                navigate(`/home`);
+                navigate(`/dashbord`);
                 // Redirection ou stockage du token ici
             } else {
                 alert(data.message || "Login failed!");

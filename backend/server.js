@@ -5,6 +5,7 @@ const authRoutes = require('./routes/auth');
 const bodyParser = require('body-parser');
 
 const app = express();
+require('dotenv').config();
 app.use(cors());
 // Connexion à la base de données
 connectDB();
