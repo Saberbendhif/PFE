@@ -1,10 +1,11 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+require('dotenv').config(); // Charger les variables d'environnement
 
 // Inscription (signup)
 exports.signup = async (req, res) => {
-  const { name, email,role, password, } = req.body;
+  const { name, email, role, password } = req.body;
   try {
     // Vérifier si l'utilisateur existe déjà
     let user = await User.findOne({ email });
@@ -12,27 +13,33 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ msg: 'Utilisateur déjà existant' });
     }
 
-    // Créer un nouvel utilisateur
+    // Hacher le mot de passe
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Créer et sauvegarder l'utilisateur
     user = new User({
       name,
       email,
       role,
-      password,
+      password: hashedPassword
     });
-
-    // Hacher le mot de passe
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-
-    // Sauvegarder dans la base de données
     await user.save();
-    res.status(201).json({ msg: 'Utilisateur créé avec succès' });
+
+    // Générer un token JWT avec l'ID et le rôle de l'utilisateur
+    const payload = {
+      id: user._id,
+      role: user.role
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(201).json({ msg: 'Utilisateur créé avec succès', token });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Erreur serveur');
   }
 };
-
 // Connexion (signin)
 exports.signin = async (req, res) => {
   const { email, password } = req.body;
@@ -51,19 +58,13 @@ exports.signin = async (req, res) => {
 
     // Générer un token JWT
     const payload = {
-      user: {
-        id: user.id,
-      },
+      id: user._id,
+      role: user.role
     };
-    jwt.sign(
-      payload,
-      'secret_key', // Remplacez par une clé secrète sécurisée
-      { expiresIn: '1h' }, // Le token expire après 1 heure
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token });
-      }
-    );
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    res.json({ token });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Erreur serveur');
